@@ -49,12 +49,12 @@ double mod_sum (const double x, const double y) {
 }
 
 // Forward Declarations of private functions
-void _brownian_bridge_bisect (int j, int J, std::unique_ptr<double[]>&, std::unique_ptr<double[]>&, std::unique_ptr<double[]>&);
+void _brownian_bridge_bisect (int j, int J, double*, double*, double*);
 
-void _ran_array (std::unique_ptr<int[]>&, int n);
+void _ran_array (int*, int n);
 void _ran_start (int32_t seed);
 int _ran_arr_cycle ();
-void _ranf_array (std::unique_ptr<double[]>&, int n);
+void _ranf_array (double*, int n);
 void _ranf_start (int32_t seed);
 double _ranf_arr_cycle ();
 
@@ -72,7 +72,7 @@ double _ranf_arr_cycle ();
  * accommodate naive users who forget to call _ran_start(seed).
  */
 
-void _ranf_array (std::unique_ptr<double[]>& aa, int n) {
+void _ranf_array (double* aa, int n) {
     int i, j;
     for (j = 0; j < KK; j++)
         aa[j] = _ran_u[j];
@@ -124,13 +124,13 @@ void _ranf_start (int seed) {
     for (; j < KK; j++)
         _ran_u[j - LL] = u[j];
     for (j = 0; j < 10; j++)
-        _ranf_array (u, KK + KK - 1); // warm things up
+        _ranf_array (u.get(), KK + KK - 1); // warm things up
     _ranf_arr_ptr = &_ranf_arr_sentinel;
 }
 
 double _ranf_arr_cycle () {
     if (_ranf_arr_ptr != &_ranf_arr_sentinel) {
-        _ranf_array (_ranf_arr_buf, QUALITY);
+        _ranf_array (_ranf_arr_buf.get(), QUALITY);
     } else {
         _ranf_start (314159LL); // the user forgot to initialize
     }
@@ -139,7 +139,7 @@ double _ranf_arr_cycle () {
     return _ranf_arr_buf[0];
 }
 
-void _ran_array (std::unique_ptr<int[]>& aa, int n) {
+void _ran_array (int* aa, int n) {
     int i, j;
     for (j = 0; j < KK; j++)
         aa[j] = _ran_x[j];
@@ -184,13 +184,13 @@ void _ran_start (int seed) {
     for (; j < KK; j++)
         _ran_x[j - LL] = x[j];
     for (j = 0; j < 10; j++)
-        _ran_array (x, KK + KK - 1); // warm things up
+        _ran_array (x.get(), KK + KK - 1); // warm things up
     _ran_arr_ptr = &_ran_arr_sentinel;
 }
 
 int _ran_arr_cycle () {
     if (_ran_arr_ptr != &_ran_arr_sentinel) {
-        _ran_array (_ran_arr_buf, QUALITY);
+        _ran_array (_ran_arr_buf.get(), QUALITY);
     } else {
         _ran_start (314159LL); // the user forgot to initialize
     }
@@ -201,7 +201,7 @@ int _ran_arr_cycle () {
 
 // uniform dist.(int)
 // This function generate n uniformly distributed random integers.
-int dist_uniform_int (std::unique_ptr<int[]>& aa, int n) {
+int dist_uniform_int (int* aa, int n) {
     _ran_start (static_cast<int32_t> (time (NULL)));
     _ran_array (aa, n);
     return 0;
@@ -209,13 +209,13 @@ int dist_uniform_int (std::unique_ptr<int[]>& aa, int n) {
 
 // uniform dist.(double)
 // This function generates n uniformly distributed random real numbers.
-int dist_uniform_double (std::unique_ptr<double[]>& aa, int n) {
+int dist_uniform_double (double* aa, int n) {
     _ranf_start (static_cast<int32_t> (time (NULL)));
     _ranf_array (aa, n);
     return 0;
 }
 
-int dist_normal_polar_rejection (std::unique_ptr<double[]>& aa, int n) {
+int dist_normal_polar_rejection (double* aa, int n) {
     /*
      This function generates n normally distributed random numbers.
      The mean and standard deviation of the distribution is
@@ -246,7 +246,7 @@ int dist_normal_polar_rejection (std::unique_ptr<double[]>& aa, int n) {
         // build an array of uniformly random numbers
         // _ranf_start((int)time(NULL));
         _ranf_start (static_cast<int32_t> (time (NULL)));
-        _ranf_array (_a, 2 * m);
+        _ranf_array (_a.get(), 2 * m);
 
         // calculate normally distributed numbers
         // from the uniformly random numbers
@@ -274,7 +274,7 @@ int dist_normal_polar_rejection (std::unique_ptr<double[]>& aa, int n) {
     return 0;
 }
 
-int dist_gamma (std::unique_ptr<double[]>& aa, int n, double a, double r) {
+int dist_gamma (double* aa, int n, double a, double r) {
     /*
      int dist_gamma(double aa[], int n, double a, double r)
      generates random deviates from gamma distribution
@@ -317,8 +317,8 @@ int dist_gamma (std::unique_ptr<double[]>& aa, int n, double a, double r) {
 }
 
 int brownian_bridge_bisection (
-    std::unique_ptr<double[]>& tt,
-    std::unique_ptr<double[]>& zz,
+    double* tt,
+    double* zz,
     double z_0,
     double z_N,
     int N
@@ -339,7 +339,7 @@ int brownian_bridge_bisection (
     // 1. build an array containing epsilon
     auto eps = std::make_unique<double[]> (N + 1); // array of epsilon
     _ranf_start ((int)time (NULL));
-    _ranf_array (eps, N + 1); // normal, mean = 0, std = 1
+    _ranf_array (eps.get(), N + 1); // normal, mean = 0, std = 1
 
     // 2. put z_0 and z_N at both ends of array, zz
     zz[0] = z_0;
@@ -349,7 +349,7 @@ int brownian_bridge_bisection (
     // recursive bisection routine.
 
     // Call recursive bisection routine
-    _brownian_bridge_bisect (0, N, tt, zz, eps);
+    _brownian_bridge_bisect (0, N, tt, zz, eps.get());
 
     return 0;
 }
@@ -357,9 +357,9 @@ int brownian_bridge_bisection (
 void _brownian_bridge_bisect (
     int j,
     int J,
-    std::unique_ptr<double[]>& tt,
-    std::unique_ptr<double[]>& zz,
-    std::unique_ptr<double[]>& eps
+    double* tt,
+    double* zz,
+    double* eps
 ) {
     /*
      Recursive bisection routine called by brownian_bridge_bisection

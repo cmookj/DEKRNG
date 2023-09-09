@@ -13,20 +13,20 @@
 
 namespace random_number {
 // uniform dist.(int)
-int dist_uniform_int (std::unique_ptr<int[]>&, int n);
+int dist_uniform_int (int*, int n);
 
 // uniform dist.(double)
-int dist_uniform_double (std::unique_ptr<double[]>&, int n);
+int dist_uniform_double (double*, int n);
 
 // normal dist.
-int dist_normal_polar_rejection (std::unique_ptr<double[]>&, int n);
+int dist_normal_polar_rejection (double*, int n);
 
 // gamma dist.
-int dist_gamma (std::unique_ptr<double[]>&, int n, double a, double r);
+int dist_gamma (double*, int n, double a, double r);
 
 // Brownian bridge
 int brownian_bridge_bisection (
-    std::unique_ptr<double[]>&, std::unique_ptr<double[]>&, double z_0, double z_N, int N
+    double*, double*, double z_0, double z_N, int N
 );
 } // namespace RandomNumber
 

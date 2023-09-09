@@ -1,16 +1,17 @@
+#include <algorithm>
 #include <iostream>
-#include <memory>
+#include <vector>
 #include "random_number.hpp"
 
 int main (int argc, const char * argv[]) {
     constexpr  size_t dim = 8000;
-    std::unique_ptr<double[]> aa = std::make_unique<double[]>(dim);
+    std::vector<double> aa(dim);
     
-    random_number::dist_normal_polar_rejection(aa, dim);
+    random_number::dist_normal_polar_rejection(aa.data(), dim);
     
-    for (size_t i = 0; i != dim; i++) {
-        std::cout << aa[i] << std::endl;
-    }
+    std::for_each (aa.cbegin(), aa.cend(), [](const auto& a){
+        std::cout << a << '\n';
+    });
     
     return 0;
 }
